@@ -1,0 +1,11 @@
+*.swp
+
+debug/
+target/
+
+.vscode/
+.idea/
+.DS_Store
+
+# Code coverage reports
+tarpaulin-report.html
