@@ -2,7 +2,25 @@
 name = "g-type"
 version = "0.0.0"
 edition = "2024"
+authors = ["Muhammad Fathir Irhas <fathir.irhas@gmail.com>"]
 description = "Generic types with bounds and validation"
 license = "MIT"
+repository = "https://github.com/mfirhas/g-type"
+documentation = "https://docs.rs/g-type"
+keywords = ["type", "generic", "type-safe", "no-std"]
+categories = ["data-structures"]
+exclude = [
+  "**/*_test.rs",
+  "tests/**",
+  "benches/**",
+  "examples/**",
+  ".github/**",
+  ".gitignore",
+  "Makefile",
+  "AGENTS.md",
+]
+
+[package.metadata.docs.rs]
+all-features = true
 
 [dependencies]
