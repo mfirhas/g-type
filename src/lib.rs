@@ -110,7 +110,7 @@ where
     T: Borrow<B::Borrowed>,
     V: Validator<T>,
 {
-    pub fn try_new_borrowed(value: T) -> Result<Self, GTypeError<V::Error>> {
+    pub fn try_owned(value: T) -> Result<Self, GTypeError<V::Error>> {
         let borrowed = value.borrow();
 
         if borrowed < B::min() {
