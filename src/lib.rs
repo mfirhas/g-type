@@ -110,6 +110,7 @@ where
         Ok(Self::new_unchecked(value))
     }
 
+    #[inline]
     pub fn inspect<F>(self, func: F) -> Self
     where
         F: FnOnce(&T),
