@@ -48,6 +48,15 @@ impl<T> Validator<T> for NoValidation {
     }
 }
 
+impl<T> Validator<T> for () {
+    type Error = Infallible;
+
+    #[inline]
+    fn validate(_: &T) -> Result<(), Self::Error> {
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum GTypeError<E> {
     BelowMinimum,
