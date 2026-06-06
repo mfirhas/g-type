@@ -64,12 +64,12 @@ pub enum GTypeError<E> {
 }
 
 #[repr(transparent)]
-pub struct GType<T, B, V = NoValidation> {
+pub struct GType<B, T, V = NoValidation> {
     value: T,
     _marker: PhantomData<(B, V)>,
 }
 
-impl<T, B, V: Validator<T>> GType<T, B, V> {
+impl<B, T, V: Validator<T>> GType<B, T, V> {
     #[inline]
     const fn new_unchecked(value: T) -> Self {
         Self {
@@ -98,14 +98,14 @@ impl<T, B, V: Validator<T>> GType<T, B, V> {
     }
 
     #[inline]
-    pub fn map<F, U, UB, UV>(&self, func: F) -> Result<GType<U, UB, UV>, GTypeError<UV::Error>>
+    pub fn map<UB, U, UV, F>(&self, func: F) -> Result<GType<UB, U, UV>, GTypeError<UV::Error>>
     where
         F: FnOnce(&T) -> U,
         U: PartialOrd + Copy,
         UB: Range<U>,
         UV: Validator<U>,
     {
-        GType::try_new(func(&self.value))
+        GType::<UB, U, UV>::try_new(func(&self.value))
     }
 
     #[inline]
@@ -118,10 +118,10 @@ impl<T, B, V: Validator<T>> GType<T, B, V> {
 }
 
 /// Constructor for const-capable bounded types.
-impl<T, B, V> GType<T, B, V>
+impl<B, T, V> GType<B, T, V>
 where
-    T: PartialOrd + Copy,
     B: Range<T>,
+    T: PartialOrd + Copy,
     V: Validator<T>,
 {
     pub fn try_new(value: T) -> Result<Self, GTypeError<V::Error>> {
@@ -140,7 +140,7 @@ where
 }
 
 /// Constructor for borrowed/static bounded types.
-impl<T, B, V> GType<T, B, V>
+impl<B, T, V> GType<B, T, V>
 where
     B: BorrowRange,
     T: Borrow<B::Borrowed>,
@@ -163,14 +163,14 @@ where
     }
 }
 
-impl<T, B, V> AsRef<T> for GType<T, B, V> {
+impl<B, T, V> AsRef<T> for GType<B, T, V> {
     #[inline]
     fn as_ref(&self) -> &T {
         &self.value
     }
 }
 
-impl<T, B, V> Clone for GType<T, B, V>
+impl<B, T, V> Clone for GType<B, T, V>
 where
     T: Clone,
 {
@@ -183,9 +183,9 @@ where
     }
 }
 
-impl<T, B, V> Copy for GType<T, B, V> where T: Copy {}
+impl<B, T, V> Copy for GType<B, T, V> where T: Copy {}
 
-impl<T, B, V> fmt::Debug for GType<T, B, V>
+impl<B, T, V> fmt::Debug for GType<B, T, V>
 where
     T: fmt::Debug,
 {
@@ -195,7 +195,7 @@ where
     }
 }
 
-impl<T, B, V> fmt::Display for GType<T, B, V>
+impl<B, T, V> fmt::Display for GType<B, T, V>
 where
     T: fmt::Display,
 {
@@ -205,7 +205,7 @@ where
     }
 }
 
-impl<T, B, V> PartialEq for GType<T, B, V>
+impl<B, T, V> PartialEq for GType<B, T, V>
 where
     T: PartialEq,
 {
@@ -215,9 +215,9 @@ where
     }
 }
 
-impl<T, B, V> Eq for GType<T, B, V> where T: Eq {}
+impl<B, T, V> Eq for GType<B, T, V> where T: Eq {}
 
-impl<T, B, V> PartialOrd for GType<T, B, V>
+impl<B, T, V> PartialOrd for GType<B, T, V>
 where
     T: PartialOrd,
 {
@@ -227,7 +227,7 @@ where
     }
 }
 
-impl<T, B, V> Ord for GType<T, B, V>
+impl<B, T, V> Ord for GType<B, T, V>
 where
     T: Ord,
 {
@@ -237,7 +237,7 @@ where
     }
 }
 
-impl<T, B, V> Hash for GType<T, B, V>
+impl<B, T, V> Hash for GType<B, T, V>
 where
     T: Hash,
 {
