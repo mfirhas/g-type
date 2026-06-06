@@ -69,7 +69,7 @@ pub struct GType<T, B, V = NoValidation> {
     _marker: PhantomData<(B, V)>,
 }
 
-impl<T, B, V> GType<T, B, V> {
+impl<T, B, V: Validator<T>> GType<T, B, V> {
     #[inline]
     const fn new_unchecked(value: T) -> Self {
         Self {
@@ -79,35 +79,13 @@ impl<T, B, V> GType<T, B, V> {
     }
 
     #[inline]
-    pub const fn get(&self) -> &T {
+    pub const fn as_ref(&self) -> &T {
         &self.value
     }
 
     #[inline]
     pub fn into_inner(self) -> T {
         self.value
-    }
-}
-
-/// Constructor for const-capable bounded types.
-impl<T, B, V> GType<T, B, V>
-where
-    T: PartialOrd + Copy,
-    B: Range<T>,
-    V: Validator<T>,
-{
-    pub fn try_new(value: T) -> Result<Self, GTypeError<V::Error>> {
-        if value < B::MIN {
-            return Err(GTypeError::BelowMinimum);
-        }
-
-        if value > B::MAX {
-            return Err(GTypeError::AboveMaximum);
-        }
-
-        V::validate(&value).map_err(GTypeError::Validation)?;
-
-        Ok(Self::new_unchecked(value))
     }
 
     #[inline]
@@ -136,6 +114,28 @@ where
         F: FnOnce(&T) -> Result<Self, GTypeError<V::Error>>,
     {
         func(&self.value)
+    }
+}
+
+/// Constructor for const-capable bounded types.
+impl<T, B, V> GType<T, B, V>
+where
+    T: PartialOrd + Copy,
+    B: Range<T>,
+    V: Validator<T>,
+{
+    pub fn try_new(value: T) -> Result<Self, GTypeError<V::Error>> {
+        if value < B::MIN {
+            return Err(GTypeError::BelowMinimum);
+        }
+
+        if value > B::MAX {
+            return Err(GTypeError::AboveMaximum);
+        }
+
+        V::validate(&value).map_err(GTypeError::Validation)?;
+
+        Ok(Self::new_unchecked(value))
     }
 }
 
