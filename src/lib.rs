@@ -37,9 +37,9 @@ pub trait Validator<T> {
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct NoValidator;
+pub struct NoValidation;
 
-impl<T> Validator<T> for NoValidator {
+impl<T> Validator<T> for NoValidation {
     type Error = Infallible;
 
     #[inline]
@@ -56,7 +56,7 @@ pub enum GTypeError<E> {
 }
 
 #[repr(transparent)]
-pub struct GType<T, B, V = NoValidator> {
+pub struct GType<T, B, V = NoValidation> {
     value: T,
     _marker: PhantomData<(B, V)>,
 }
