@@ -7,7 +7,6 @@ use core::{
     fmt,
     hash::{Hash, Hasher},
     marker::PhantomData,
-    ops::Deref,
 };
 
 /// Compile-time bounds for const-capable types.
@@ -110,6 +109,33 @@ where
 
         Ok(Self::new_unchecked(value))
     }
+
+    pub fn inspect<F>(self, func: F) -> Self
+    where
+        F: FnOnce(&T),
+    {
+        func(&self.value);
+        self
+    }
+
+    #[inline]
+    pub fn map<F, U, UB, UV>(&self, func: F) -> Result<GType<U, UB, UV>, GTypeError<UV::Error>>
+    where
+        F: FnOnce(&T) -> U,
+        U: PartialOrd + Copy,
+        UB: Range<U>,
+        UV: Validator<U>,
+    {
+        GType::try_new(func(&self.value))
+    }
+
+    #[inline]
+    pub fn and_then<F>(&self, func: F) -> Result<Self, GTypeError<V::Error>>
+    where
+        F: FnOnce(&T) -> Result<Self, GTypeError<V::Error>>,
+    {
+        func(&self.value)
+    }
 }
 
 /// Constructor for borrowed/static bounded types.
@@ -139,15 +165,6 @@ where
 impl<T, B, V> AsRef<T> for GType<T, B, V> {
     #[inline]
     fn as_ref(&self) -> &T {
-        &self.value
-    }
-}
-
-impl<T, B, V> Deref for GType<T, B, V> {
-    type Target = T;
-
-    #[inline]
-    fn deref(&self) -> &Self::Target {
         &self.value
     }
 }
