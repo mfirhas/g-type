@@ -48,19 +48,30 @@ mod serde;
 /// assert!(value.is_ok());
 /// ```
 pub trait Validator<T> {
+    /// Target type for bounds comparison.
+    ///
+    /// # Examples
+    /// - u32 -> u32
+    /// - String -> str
+    /// - Vec\<T\> -> \[T\] or \[T; N\]
     type Target: PartialOrd<T> + ?Sized + 'static;
+
+    /// Validation error type.
     type Error;
 
+    /// Minimum value in range, inclusive.
     #[inline]
     fn min() -> Option<&'static Self::Target> {
         None
     }
 
+    /// Maximum value in range, inclusive.
     #[inline]
     fn max() -> Option<&'static Self::Target> {
         None
     }
 
+    /// Validation logics.
     #[inline]
     fn validate(_: &T) -> Result<(), Self::Error> {
         Ok(())
