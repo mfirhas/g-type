@@ -30,7 +30,7 @@ pub trait Validator<T> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct NoValidation;
 
 impl<T: PartialOrd + 'static> Validator<T> for NoValidation {
