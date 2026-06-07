@@ -98,22 +98,32 @@ impl<B, T, V: Validator<T>> GType<B, T, V> {
     }
 
     #[inline]
-    pub fn map<UB, U, UV, F>(&self, func: F) -> Result<GType<UB, U, UV>, GTypeError<UV::Error>>
+    pub fn map<UB, U, UV, F>(self, func: F) -> Result<GType<UB, U, UV>, GTypeError<UV::Error>>
     where
-        F: FnOnce(&T) -> U,
+        F: FnOnce(T) -> U,
         U: PartialOrd + Copy,
         UB: Range<U>,
         UV: Validator<U>,
     {
-        GType::<UB, U, UV>::try_new(func(&self.value))
+        GType::<UB, U, UV>::try_new(func(self.value))
+    }
+
+    pub fn map_owned<UB, U, UV, F>(self, func: F) -> Result<GType<UB, U, UV>, GTypeError<UV::Error>>
+    where
+        F: FnOnce(T) -> U,
+        UB: BorrowRange,
+        U: Borrow<UB::Borrowed>,
+        UV: Validator<U>,
+    {
+        GType::<UB, U, UV>::try_owned(func(self.value))
     }
 
     #[inline]
-    pub fn and_then<F>(&self, func: F) -> Result<Self, GTypeError<V::Error>>
+    pub fn and_then<F>(self, func: F) -> Result<Self, GTypeError<V::Error>>
     where
-        F: FnOnce(&T) -> Result<Self, GTypeError<V::Error>>,
+        F: FnOnce(T) -> Result<Self, GTypeError<V::Error>>,
     {
-        func(&self.value)
+        func(self.value)
     }
 }
 
@@ -166,6 +176,12 @@ where
 impl<B, T, V> AsRef<T> for GType<B, T, V> {
     #[inline]
     fn as_ref(&self) -> &T {
+        &self.value
+    }
+}
+
+impl<B, T, V> Borrow<T> for GType<B, T, V> {
+    fn borrow(&self) -> &T {
         &self.value
     }
 }
