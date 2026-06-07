@@ -172,6 +172,7 @@ impl<T, LHSV, RHSV> PartialEq<GType<T, RHSV>> for GType<T, LHSV>
 where
     T: PartialEq,
 {
+    #[inline]
     fn eq(&self, other: &GType<T, RHSV>) -> bool {
         self.value == other.value
     }
