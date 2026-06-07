@@ -1,5 +1,12 @@
 # GType
 
+![Rust](https://img.shields.io/badge/Rust-000000?style=flat&logo=rust&logoColor=white)
+[![Crates.io](https://img.shields.io/crates/v/g-type.svg)](https://crates.io/crates/g-type)
+[![ci](https://github.com/mfirhas/g-type/actions/workflows/ci.yml/badge.svg)](https://github.com/mfirhas/g-type/actions/workflows/ci.yml)
+[![Documentation](https://docs.rs/g-type/badge.svg)](https://docs.rs/g-type)
+[![codecov](https://codecov.io/gh/mfirhas/g-type/branch/master/graph/badge.svg)](https://codecov.io/gh/mfirhas/g-type)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/mfirhas/g-type/blob/master/LICENSE)
+
 A lightweight, `no_std`-friendly validated value type.
 
 `GType<T, V>` wraps a value of type `T` and guarantees that it satisfies the constraints defined by a validator `V`.
