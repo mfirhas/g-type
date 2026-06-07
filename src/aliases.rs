@@ -20,5 +20,7 @@ pub type Gf64<V = NoValidation> = GType<f64, V>;
 pub type GBool<V = NoValidation> = GType<bool, V>;
 pub type GChar<V = NoValidation> = GType<char, V>;
 
+#[cfg(feature = "alloc")]
 pub type GString<V = NoValidation> = GType<String, V>;
+
 pub type GStr<V = NoValidation> = GType<&'static str, V>;
