@@ -23,4 +23,12 @@ exclude = [
 [package.metadata.docs.rs]
 all-features = true
 
+[features]
+default = ["std"]
+std = ["alloc", "serde?/std"]
+alloc = ["serde?/alloc"]
+serde = ["dep:serde"]
+
 [dependencies]
+serde = { version = "1", default-features = false, optional = true }
+

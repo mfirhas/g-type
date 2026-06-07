@@ -1,4 +1,4 @@
-#![no_std]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 use core::{
     borrow::Borrow,
@@ -8,6 +8,8 @@ use core::{
     hash::{Hash, Hasher},
     marker::PhantomData,
 };
+
+pub mod aliases;
 
 /// Optional runtime validation.
 pub trait Validator<T> {
