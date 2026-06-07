@@ -5,6 +5,10 @@ use std::collections::hash_map::DefaultHasher;
 use std::error::Error;
 use std::hash::{Hash, Hasher};
 
+#[cfg(feature = "serde")]
+#[path = "serde_test.rs"]
+mod serde_test;
+
 // ===== Validators ========================================================
 
 struct Percent;
