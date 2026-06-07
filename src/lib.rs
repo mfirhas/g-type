@@ -130,6 +130,7 @@ impl<T, V> AsRef<T> for GType<T, V> {
 }
 
 impl<T, V> Borrow<T> for GType<T, V> {
+    #[inline]
     fn borrow(&self) -> &T {
         &self.value
     }
