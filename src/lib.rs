@@ -19,7 +19,7 @@ pub trait Range<T> {
 ///
 /// Examples:
 /// - String -> str
-/// - Vec<u8> -> [u8]
+/// - Vec\<u8\> -> \[u8\]
 /// - PathBuf -> Path
 pub trait BorrowRange {
     type Borrowed: ?Sized + PartialOrd + 'static;
