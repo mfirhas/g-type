@@ -13,6 +13,9 @@ use core::{
 
 pub mod aliases;
 
+#[cfg(feature = "serde")]
+mod serde;
+
 /// Optional runtime validation.
 pub trait Validator<T> {
     type Target: PartialOrd<T> + ?Sized + 'static;
