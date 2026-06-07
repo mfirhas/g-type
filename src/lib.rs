@@ -4,6 +4,7 @@ use core::{
     borrow::Borrow,
     cmp::PartialOrd,
     convert::Infallible,
+    error::Error,
     fmt,
     hash::{Hash, Hasher},
     marker::PhantomData,
@@ -50,6 +51,25 @@ pub enum GTypeError<E> {
     BelowMinimum,
     AboveMaximum,
     Validation(E),
+}
+
+impl<E: fmt::Display> fmt::Display for GTypeError<E> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::BelowMinimum => f.write_str("value is below minimum"),
+            Self::AboveMaximum => f.write_str("value is above maximum"),
+            Self::Validation(err) => err.fmt(f),
+        }
+    }
+}
+
+impl<E: Error + 'static> Error for GTypeError<E> {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::Validation(err) => Some(err),
+            Self::BelowMinimum | Self::AboveMaximum => None,
+        }
+    }
 }
 
 #[repr(transparent)]
