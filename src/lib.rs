@@ -56,10 +56,7 @@ pub struct GType<T, V = NoValidation> {
     _marker: PhantomData<V>,
 }
 
-impl<T, V: Validator<T>> GType<T, V>
-where
-    T: PartialOrd<V::Target>,
-{
+impl<T: PartialOrd<V::Target>, V: Validator<T>> GType<T, V> {
     #[inline]
     pub(crate) const fn new_unchecked(value: T) -> Self {
         Self {
@@ -171,24 +168,23 @@ where
     }
 }
 
-impl<T, V> PartialEq for GType<T, V>
+impl<T, LHSV, RHSV> PartialEq<GType<T, RHSV>> for GType<T, LHSV>
 where
     T: PartialEq,
 {
-    #[inline]
-    fn eq(&self, other: &Self) -> bool {
-        self.value.eq(&other.value)
+    fn eq(&self, other: &GType<T, RHSV>) -> bool {
+        self.value == other.value
     }
 }
 
 impl<T, V> Eq for GType<T, V> where T: Eq {}
 
-impl<T, V> PartialOrd for GType<T, V>
+impl<T, LHSV, RHSV> PartialOrd<GType<T, RHSV>> for GType<T, LHSV>
 where
     T: PartialOrd,
 {
     #[inline]
-    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
+    fn partial_cmp(&self, other: &GType<T, RHSV>) -> Option<core::cmp::Ordering> {
         self.value.partial_cmp(&other.value)
     }
 }
