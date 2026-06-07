@@ -280,3 +280,45 @@ fn validation_error_exposes_source() {
 
     assert!(err.source().is_some());
 }
+
+struct AdultAge;
+
+impl Validator<u8> for AdultAge {
+    type Target = u8;
+    type Error = Infallible;
+
+    fn min() -> Option<&'static Self::Target> {
+        Some(&18)
+    }
+}
+
+#[test]
+fn covers_remaining_branches() {
+    use core::cmp::Ordering;
+
+    // BelowMinimum branch in try_new()
+    assert_eq!(
+        GType::<u8, AdultAge>::try_new(17),
+        Err(GTypeError::BelowMinimum)
+    );
+
+    // Error::source() None branches
+    let below: GTypeError<EvenError> = GTypeError::BelowMinimum;
+    let above: GTypeError<EvenError> = GTypeError::AboveMaximum;
+
+    assert!(below.source().is_none());
+    assert!(above.source().is_none());
+
+    // AsRef trait impl (not inherent method)
+    let value = GType::<String>::try_new("hello".to_owned()).unwrap();
+    let s: &String = AsRef::<String>::as_ref(&value);
+    assert_eq!(s, "hello");
+
+    // Ord::cmp()
+    let a = GType::<u32>::try_new(1).unwrap();
+    let b = GType::<u32>::try_new(2).unwrap();
+
+    assert_eq!(a.cmp(&b), Ordering::Less);
+    assert_eq!(b.cmp(&a), Ordering::Greater);
+    assert_eq!(a.cmp(&a), Ordering::Equal);
+}
