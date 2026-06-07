@@ -104,17 +104,19 @@ impl<T: PartialOrd<V::Target>, V: Validator<T>> GType<T, V> {
     #[inline]
     pub fn map<U, UV, F>(self, func: F) -> Result<GType<U, UV>, GTypeError<UV::Error>>
     where
-        F: FnOnce(T) -> U,
         U: PartialOrd<UV::Target>,
         UV: Validator<U>,
+        F: FnOnce(T) -> U,
     {
         GType::<U, UV>::try_new(func(self.value))
     }
 
     #[inline]
-    pub fn and_then<F>(self, func: F) -> Result<Self, GTypeError<V::Error>>
+    pub fn and_then<U, UV, F>(self, func: F) -> Result<GType<U, UV>, GTypeError<UV::Error>>
     where
-        F: FnOnce(T) -> Result<Self, GTypeError<V::Error>>,
+        U: PartialOrd<UV::Target>,
+        UV: Validator<U>,
+        F: FnOnce(T) -> Result<GType<U, UV>, GTypeError<UV::Error>>,
     {
         func(self.value)
     }
