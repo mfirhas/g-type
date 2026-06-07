@@ -9,51 +9,38 @@ use core::{
     marker::PhantomData,
 };
 
-/// Compile-time bounds for const-capable types.
-pub trait Range<T> {
-    const MIN: T;
-    const MAX: T;
-}
-
-/// Static borrowed bounds for non-const owned types.
-///
-/// Examples:
-/// - String -> str
-/// - Vec\<u8\> -> \[u8\]
-/// - PathBuf -> Path
-pub trait BorrowRange {
-    type Borrowed: ?Sized + PartialOrd + 'static;
-
-    fn min() -> &'static Self::Borrowed;
-    fn max() -> &'static Self::Borrowed;
-}
-
 /// Optional runtime validation.
 pub trait Validator<T> {
+    type Target: PartialOrd<T> + ?Sized + 'static;
     type Error;
 
-    fn validate(value: &T) -> Result<(), Self::Error>;
+    #[inline]
+    fn min() -> Option<&'static Self::Target> {
+        None
+    }
+
+    #[inline]
+    fn max() -> Option<&'static Self::Target> {
+        None
+    }
+
+    #[inline]
+    fn validate(_: &T) -> Result<(), Self::Error> {
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NoValidation;
 
-impl<T> Validator<T> for NoValidation {
+impl<T: PartialOrd + 'static> Validator<T> for NoValidation {
+    type Target = T;
     type Error = Infallible;
-
-    #[inline]
-    fn validate(_: &T) -> Result<(), Self::Error> {
-        Ok(())
-    }
 }
 
-impl<T> Validator<T> for () {
+impl<T: PartialOrd + 'static> Validator<T> for () {
+    type Target = T;
     type Error = Infallible;
-
-    #[inline]
-    fn validate(_: &T) -> Result<(), Self::Error> {
-        Ok(())
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -64,18 +51,38 @@ pub enum GTypeError<E> {
 }
 
 #[repr(transparent)]
-pub struct GType<B, T, V = NoValidation> {
+pub struct GType<T, V = NoValidation> {
     value: T,
-    _marker: PhantomData<(B, V)>,
+    _marker: PhantomData<V>,
 }
 
-impl<B, T, V: Validator<T>> GType<B, T, V> {
+impl<T, V: Validator<T>> GType<T, V>
+where
+    T: PartialOrd<V::Target>,
+{
     #[inline]
-    const fn new_unchecked(value: T) -> Self {
+    pub(crate) const fn new_unchecked(value: T) -> Self {
         Self {
             value,
             _marker: PhantomData,
         }
+    }
+
+    pub fn try_new(value: T) -> Result<Self, GTypeError<V::Error>> {
+        if let Some(min) = V::min()
+            && &value < min
+        {
+            return Err(GTypeError::BelowMinimum);
+        }
+        if let Some(max) = V::max()
+            && &value > max
+        {
+            return Err(GTypeError::AboveMaximum);
+        }
+
+        V::validate(&value).map_err(GTypeError::Validation)?;
+
+        Ok(Self::new_unchecked(value))
     }
 
     #[inline]
@@ -98,24 +105,13 @@ impl<B, T, V: Validator<T>> GType<B, T, V> {
     }
 
     #[inline]
-    pub fn map<UB, U, UV, F>(self, func: F) -> Result<GType<UB, U, UV>, GTypeError<UV::Error>>
+    pub fn map<U, UV, F>(self, func: F) -> Result<GType<U, UV>, GTypeError<UV::Error>>
     where
         F: FnOnce(T) -> U,
-        U: PartialOrd + Copy,
-        UB: Range<U>,
+        U: PartialOrd<UV::Target>,
         UV: Validator<U>,
     {
-        GType::<UB, U, UV>::try_new(func(self.value))
-    }
-
-    pub fn map_owned<UB, U, UV, F>(self, func: F) -> Result<GType<UB, U, UV>, GTypeError<UV::Error>>
-    where
-        F: FnOnce(T) -> U,
-        UB: BorrowRange,
-        U: Borrow<UB::Borrowed>,
-        UV: Validator<U>,
-    {
-        GType::<UB, U, UV>::try_owned(func(self.value))
+        GType::<U, UV>::try_new(func(self.value))
     }
 
     #[inline]
@@ -127,66 +123,20 @@ impl<B, T, V: Validator<T>> GType<B, T, V> {
     }
 }
 
-/// Constructor for const-capable bounded types.
-impl<B, T, V> GType<B, T, V>
-where
-    B: Range<T>,
-    T: PartialOrd + Copy,
-    V: Validator<T>,
-{
-    pub fn try_new(value: T) -> Result<Self, GTypeError<V::Error>> {
-        if value < B::MIN {
-            return Err(GTypeError::BelowMinimum);
-        }
-
-        if value > B::MAX {
-            return Err(GTypeError::AboveMaximum);
-        }
-
-        V::validate(&value).map_err(GTypeError::Validation)?;
-
-        Ok(Self::new_unchecked(value))
-    }
-}
-
-/// Constructor for borrowed/static bounded types.
-impl<B, T, V> GType<B, T, V>
-where
-    B: BorrowRange,
-    T: Borrow<B::Borrowed>,
-    V: Validator<T>,
-{
-    pub fn try_owned(value: T) -> Result<Self, GTypeError<V::Error>> {
-        let borrowed = value.borrow();
-
-        if borrowed < B::min() {
-            return Err(GTypeError::BelowMinimum);
-        }
-
-        if borrowed > B::max() {
-            return Err(GTypeError::AboveMaximum);
-        }
-
-        V::validate(&value).map_err(GTypeError::Validation)?;
-
-        Ok(Self::new_unchecked(value))
-    }
-}
-
-impl<B, T, V> AsRef<T> for GType<B, T, V> {
+impl<T, V> AsRef<T> for GType<T, V> {
     #[inline]
     fn as_ref(&self) -> &T {
         &self.value
     }
 }
 
-impl<B, T, V> Borrow<T> for GType<B, T, V> {
+impl<T, V> Borrow<T> for GType<T, V> {
     fn borrow(&self) -> &T {
         &self.value
     }
 }
 
-impl<B, T, V> Clone for GType<B, T, V>
+impl<T, V> Clone for GType<T, V>
 where
     T: Clone,
 {
@@ -199,9 +149,9 @@ where
     }
 }
 
-impl<B, T, V> Copy for GType<B, T, V> where T: Copy {}
+impl<T, V> Copy for GType<T, V> where T: Copy {}
 
-impl<B, T, V> fmt::Debug for GType<B, T, V>
+impl<T, V> fmt::Debug for GType<T, V>
 where
     T: fmt::Debug,
 {
@@ -211,7 +161,7 @@ where
     }
 }
 
-impl<B, T, V> fmt::Display for GType<B, T, V>
+impl<T, V> fmt::Display for GType<T, V>
 where
     T: fmt::Display,
 {
@@ -221,7 +171,7 @@ where
     }
 }
 
-impl<B, T, V> PartialEq for GType<B, T, V>
+impl<T, V> PartialEq for GType<T, V>
 where
     T: PartialEq,
 {
@@ -231,9 +181,9 @@ where
     }
 }
 
-impl<B, T, V> Eq for GType<B, T, V> where T: Eq {}
+impl<T, V> Eq for GType<T, V> where T: Eq {}
 
-impl<B, T, V> PartialOrd for GType<B, T, V>
+impl<T, V> PartialOrd for GType<T, V>
 where
     T: PartialOrd,
 {
@@ -243,7 +193,7 @@ where
     }
 }
 
-impl<B, T, V> Ord for GType<B, T, V>
+impl<T, V> Ord for GType<T, V>
 where
     T: Ord,
 {
@@ -253,7 +203,7 @@ where
     }
 }
 
-impl<B, T, V> Hash for GType<B, T, V>
+impl<T, V> Hash for GType<T, V>
 where
     T: Hash,
 {
