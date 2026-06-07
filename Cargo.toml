@@ -23,6 +23,10 @@ exclude = [
 [package.metadata.docs.rs]
 all-features = true
 
+[[test]]
+name = "test"
+path = "tests/test.rs"
+
 [features]
 default = ["std"]
 std = ["alloc", "serde?/std"]
