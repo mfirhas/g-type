@@ -85,7 +85,7 @@ pub trait Validator<T> {
 /// ```rust
 /// use g_type::GType;
 ///
-/// let value = GType::<u32>::try_new(123).unwrap();
+/// let value: GType<_> = GType::try_new(123).unwrap();
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct NoValidation;
