@@ -16,7 +16,37 @@ pub mod aliases;
 #[cfg(feature = "serde")]
 mod serde;
 
-/// Optional runtime validation.
+/// Validation strategy for [`GType`].
+///
+/// A validator can:
+///
+/// - Define an optional minimum value via [`Validator::min`].
+/// - Define an optional maximum value via [`Validator::max`].
+/// - Perform arbitrary validation via [`Validator::validate`].
+///
+/// Validation is performed when constructing a [`GType`] using
+/// [`GType::try_new`].
+///
+/// # Example
+///
+/// ```rust
+/// use core::convert::Infallible;
+/// use g_type::{GType, Validator};
+///
+/// struct Percent;
+///
+/// impl Validator<u8> for Percent {
+///     type Target = u8;
+///     type Error = Infallible;
+///
+///     fn max() -> Option<&'static Self::Target> {
+///         Some(&100)
+///     }
+/// }
+///
+/// let value = GType::<u8, Percent>::try_new(42);
+/// assert!(value.is_ok());
+/// ```
 pub trait Validator<T> {
     type Target: PartialOrd<T> + ?Sized + 'static;
     type Error;
@@ -37,6 +67,15 @@ pub trait Validator<T> {
     }
 }
 
+/// Validator that performs no validation.
+///
+/// This is the default validator used by [`GType`].
+///
+/// ```rust
+/// use g_type::GType;
+///
+/// let value = GType::<u32>::try_new(123).unwrap();
+/// ```
 #[derive(Debug, Clone, Copy)]
 pub struct NoValidation;
 
@@ -50,10 +89,16 @@ impl<T: PartialOrd + 'static> Validator<T> for () {
     type Error = Infallible;
 }
 
+/// Error returned when constructing a [`GType`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum GTypeError<E> {
+    /// The value is below the validator's minimum bound.
     BelowMinimum,
+
+    /// The value is above the validator's maximum bound.
     AboveMaximum,
+
+    /// The validator rejected the value.
     Validation(E),
 }
 
@@ -76,6 +121,45 @@ impl<E: Error + 'static> Error for GTypeError<E> {
     }
 }
 
+/// A validated value.
+///
+/// `GType<T, V>` wraps a value of type `T` and guarantees that it
+/// satisfied validator `V` at construction time.
+///
+/// Validation is performed by [`GType::try_new`]. Once constructed,
+/// the contained value cannot be modified directly, preserving the
+/// validator's invariants.
+///
+/// # Examples
+///
+/// ```rust
+/// use g_type::GType;
+///
+/// let value = GType::<u32>::try_new(42).unwrap();
+///
+/// assert_eq!(*value.as_ref(), 42);
+/// ```
+///
+/// With a custom validator:
+///
+/// ```rust
+/// use core::convert::Infallible;
+/// use g_type::{GType, Validator};
+///
+/// struct Percent;
+///
+/// impl Validator<u8> for Percent {
+///     type Target = u8;
+///     type Error = Infallible;
+///
+///     fn max() -> Option<&'static Self::Target> {
+///         Some(&100)
+///     }
+/// }
+///
+/// assert!(GType::<u8, Percent>::try_new(50).is_ok());
+/// assert!(GType::<u8, Percent>::try_new(150).is_err());
+/// ```
 #[repr(transparent)]
 pub struct GType<T, V = NoValidation> {
     value: T,
@@ -91,6 +175,10 @@ impl<T: PartialOrd<V::Target>, V: Validator<T>> GType<T, V> {
         }
     }
 
+    /// Attempts to create a validated value.
+    ///
+    /// Returns an error if the value violates the validator's
+    /// minimum bound, maximum bound, or custom validation rules.
     pub fn try_new(value: T) -> Result<Self, GTypeError<V::Error>> {
         if let Some(min) = V::min()
             && &value < min
@@ -108,16 +196,24 @@ impl<T: PartialOrd<V::Target>, V: Validator<T>> GType<T, V> {
         Ok(Self::new_unchecked(value))
     }
 
+    /// Returns a shared reference to the underlying value.
     #[inline]
     pub const fn as_ref(&self) -> &T {
         &self.value
     }
 
+    /// Consumes the wrapper and returns the underlying value.
     #[inline]
     pub fn into_inner(self) -> T {
         self.value
     }
 
+    /// Calls a function with a reference to the contained value.
+    ///
+    /// Returns `self` unchanged.
+    ///
+    /// This is primarily useful for debugging and logging in method
+    /// chains.
     #[inline]
     pub fn inspect<F>(self, func: F) -> Self
     where
@@ -127,6 +223,12 @@ impl<T: PartialOrd<V::Target>, V: Validator<T>> GType<T, V> {
         self
     }
 
+    /// Transforms the contained value into another validated type.
+    ///
+    /// The transformed value is validated using the destination
+    /// validator before being returned.
+    ///
+    /// This behaves similarly to `Option::map` and `Result::map`.
     #[inline]
     pub fn map<U, UV, F>(self, func: F) -> Result<GType<U, UV>, GTypeError<UV::Error>>
     where
@@ -137,6 +239,10 @@ impl<T: PartialOrd<V::Target>, V: Validator<T>> GType<T, V> {
         GType::<U, UV>::try_new(func(self.value))
     }
 
+    /// Chains another fallible validated transformation.
+    ///
+    /// This behaves similarly to `Option::and_then` and
+    /// `Result::and_then`.
     #[inline]
     pub fn and_then<U, UV, F>(self, func: F) -> Result<GType<U, UV>, GTypeError<UV::Error>>
     where

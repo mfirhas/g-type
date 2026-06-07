@@ -1,3 +1,6 @@
+//! Some aliases for some primitives.
+//!
+
 use crate::{GType, NoValidation};
 
 pub type Gu8<V = NoValidation> = GType<u8, V>;
@@ -17,7 +20,6 @@ pub type Gisize<V = NoValidation> = GType<isize, V>;
 pub type Gf32<V = NoValidation> = GType<f32, V>;
 pub type Gf64<V = NoValidation> = GType<f64, V>;
 
-pub type GBool<V = NoValidation> = GType<bool, V>;
 pub type GChar<V = NoValidation> = GType<char, V>;
 
 #[cfg(feature = "alloc")]
