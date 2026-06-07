@@ -171,24 +171,26 @@ where
     }
 }
 
-impl<T, LHSV, RHSV> PartialEq<GType<T, RHSV>> for GType<T, LHSV>
+impl<T, U, LHSV, RHSV> PartialEq<GType<U, RHSV>> for GType<T, LHSV>
 where
-    T: PartialEq,
+    T: PartialEq<U>,
+    U: PartialEq<T>,
 {
     #[inline]
-    fn eq(&self, other: &GType<T, RHSV>) -> bool {
+    fn eq(&self, other: &GType<U, RHSV>) -> bool {
         self.value == other.value
     }
 }
 
 impl<T, V> Eq for GType<T, V> where T: Eq {}
 
-impl<T, LHSV, RHSV> PartialOrd<GType<T, RHSV>> for GType<T, LHSV>
+impl<T, U, LHSV, RHSV> PartialOrd<GType<U, RHSV>> for GType<T, LHSV>
 where
-    T: PartialOrd,
+    T: PartialOrd<U>,
+    U: PartialOrd<T>,
 {
     #[inline]
-    fn partial_cmp(&self, other: &GType<T, RHSV>) -> Option<core::cmp::Ordering> {
+    fn partial_cmp(&self, other: &GType<U, RHSV>) -> Option<core::cmp::Ordering> {
         self.value.partial_cmp(&other.value)
     }
 }
