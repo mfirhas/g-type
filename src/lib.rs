@@ -27,6 +27,11 @@ mod serde;
 /// Validation is performed when constructing a [`GType`] using
 /// [`GType::try_new`].
 ///
+/// # Note
+/// [`Validator::Target`] is comparison target for checking bounds for T.
+/// Its value must be comparable to itself and T.
+/// Putting non-comparable value(e.g [`f32::NAN`]) might give error construction.
+///
 /// # Example
 ///
 /// ```rust
