@@ -153,12 +153,14 @@ Construction may fail for three reasons:
 
 ```rust
 pub enum GTypeError<E> {
+    MinExceedsMax,
     BelowMinimum,
     AboveMaximum,
     Validation(E),
 }
 ```
 
+* `MinExceedsMax` — minimum value exceeds maximum value. 
 * `BelowMinimum` — value is below the validator minimum.
 * `AboveMaximum` — value exceeds the validator maximum.
 * `Validation(E)` — custom validator rejected the value.
