@@ -54,7 +54,7 @@ pub trait Validator<T> {
     /// - u32 -> u32
     /// - String -> str
     /// - Vec\<T\> -> \[T\] or \[T; N\]
-    type Target: PartialOrd<T> + ?Sized + 'static;
+    type Target: PartialOrd<Self::Target> + PartialOrd<T> + ?Sized + 'static;
 
     /// Validation error type.
     type Error;
@@ -101,8 +101,12 @@ impl<T: PartialOrd + 'static> Validator<T> for () {
 }
 
 /// Error returned when constructing a [`GType`].
+#[non_exhaustive]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum GTypeError<E> {
+    /// When minimum value exceeds maximum value.
+    MinExceedsMax,
+
     /// The value is below the validator's minimum bound.
     BelowMinimum,
 
@@ -116,6 +120,7 @@ pub enum GTypeError<E> {
 impl<E: fmt::Display> fmt::Display for GTypeError<E> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::MinExceedsMax => f.write_str("minimum value exceeds maximum value"),
             Self::BelowMinimum => f.write_str("value is below minimum"),
             Self::AboveMaximum => f.write_str("value is above maximum"),
             Self::Validation(err) => err.fmt(f),
@@ -127,7 +132,7 @@ impl<E: Error + 'static> Error for GTypeError<E> {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::Validation(err) => Some(err),
-            Self::BelowMinimum | Self::AboveMaximum => None,
+            Self::MinExceedsMax | Self::BelowMinimum | Self::AboveMaximum => None,
         }
     }
 }
@@ -191,6 +196,12 @@ impl<T: PartialOrd<V::Target>, V: Validator<T>> GType<T, V> {
     /// Returns an error if the value violates the validator's
     /// minimum bound, maximum bound, or custom validation rules.
     pub fn try_new(value: T) -> Result<Self, GTypeError<V::Error>> {
+        if let Some(min) = V::min()
+            && let Some(max) = V::max()
+            && min > max
+        {
+            return Err(GTypeError::MinExceedsMax);
+        }
         if let Some(min) = V::min()
             && &value < min
         {
