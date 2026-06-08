@@ -189,7 +189,7 @@ pub struct GType<T, V = NoValidation> {
 
 impl<T: PartialOrd<V::Target>, V: Validator<T>> GType<T, V> {
     #[inline]
-    pub(crate) const fn new_unchecked(value: T) -> Self {
+    pub(crate) const fn new(value: T) -> Self {
         Self {
             value,
             _marker: PhantomData,
@@ -217,7 +217,7 @@ impl<T: PartialOrd<V::Target>, V: Validator<T>> GType<T, V> {
 
         V::validate(&value).map_err(GTypeError::Validation)?;
 
-        Ok(Self::new_unchecked(value))
+        Ok(Self::new(value))
     }
 
     /// Returns a shared reference to the underlying value.
