@@ -26,8 +26,20 @@ where
     where
         D: Deserializer<'de>,
     {
-        let value = T::deserialize(deserializer)?;
+        let value = T::deserialize(deserializer).map_err(|err| {
+            D::Error::custom(format_args!(
+                "failed deserializin {}: {}",
+                core::any::type_name::<T>(),
+                err
+            ))
+        })?;
 
-        GType::<T, V>::try_new(value).map_err(D::Error::custom)
+        GType::<T, V>::try_new(value).map_err(|err| {
+            D::Error::custom(format_args!(
+                "failed constructing {}: {}",
+                core::any::type_name::<Self>(),
+                err
+            ))
+        })
     }
 }

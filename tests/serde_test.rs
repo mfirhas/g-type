@@ -82,3 +82,19 @@ fn deserialize_preserves_validation() {
     assert!(ok.is_ok());
     assert!(err.is_err());
 }
+
+#[test]
+fn failed_deserialize() {
+    let err: Result<Gu8<Percent>, _> = serde_json::from_str("anu");
+
+    dbg!(&err);
+    assert!(err.is_err());
+}
+
+#[test]
+fn failed_deserialize_invalid() {
+    let err: Result<Gu8<Percent>, _> = serde_json::from_str("200");
+
+    dbg!(&err);
+    assert!(err.is_err());
+}
