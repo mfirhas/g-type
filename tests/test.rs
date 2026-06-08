@@ -276,6 +276,11 @@ fn error_display_messages() {
         GTypeError::<EvenError>::Validation(EvenError).to_string(),
         "must be even"
     );
+
+    assert_eq!(
+        GTypeError::<Infallible>::MinExceedsMax.to_string(),
+        "minimum value exceeds maximum value"
+    )
 }
 
 #[test]
@@ -309,9 +314,11 @@ fn covers_remaining_branches() {
     // Error::source() None branches
     let below: GTypeError<EvenError> = GTypeError::BelowMinimum;
     let above: GTypeError<EvenError> = GTypeError::AboveMaximum;
+    let minexceedsmax: GTypeError<EvenError> = GTypeError::MinExceedsMax;
 
     assert!(below.source().is_none());
     assert!(above.source().is_none());
+    assert!(minexceedsmax.source().is_none());
 
     // AsRef trait impl (not inherent method)
     let value = GType::<String>::try_new("hello".to_owned()).unwrap();
