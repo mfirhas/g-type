@@ -326,3 +326,24 @@ fn covers_remaining_branches() {
     assert_eq!(b.cmp(&a), Ordering::Greater);
     assert_eq!(a.cmp(&a), Ordering::Equal);
 }
+
+#[test]
+fn test_min_exceeds_max() {
+    struct Asd;
+    impl Validator<u8> for Asd {
+        type Target = u8;
+        type Error = GTypeError<&'static str>;
+
+        fn min() -> Option<&'static Self::Target> {
+            Some(&100)
+        }
+
+        fn max() -> Option<&'static Self::Target> {
+            Some(&10)
+        }
+    }
+
+    let ret = GType::<_, Asd>::try_new(123_u8);
+    assert!(ret.is_err());
+    assert_eq!(ret.unwrap_err(), GTypeError::MinExceedsMax);
+}
