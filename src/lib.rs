@@ -196,10 +196,17 @@ impl<T: PartialOrd<V::Target>, V: Validator<T>> GType<T, V> {
     /// Returns an error if the value violates the validator's
     /// minimum bound, maximum bound, or custom validation rules.
     pub fn try_new(value: T) -> Result<Self, GTypeError<V::Error>> {
+        #[allow(clippy::neg_cmp_op_on_partial_ord)]
         match (V::min(), V::max()) {
-            (Some(min), Some(max)) if min > max => return Err(GTypeError::MinExceedsMax),
-            (Some(min), _) if &value < min => return Err(GTypeError::BelowMinimum),
-            (_, Some(max)) if &value > max => return Err(GTypeError::AboveMaximum),
+            (Some(min), Some(max)) if !(min <= max) => {
+                return Err(GTypeError::MinExceedsMax);
+            }
+            (Some(min), _) if !(&value >= min) => {
+                return Err(GTypeError::BelowMinimum);
+            }
+            (_, Some(max)) if !(&value <= max) => {
+                return Err(GTypeError::AboveMaximum);
+            }
             _ => (),
         }
 
