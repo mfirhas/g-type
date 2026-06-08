@@ -123,7 +123,7 @@ impl<E: fmt::Display> fmt::Display for GTypeError<E> {
             Self::MinExceedsMax => f.write_str("minimum value exceeds maximum value"),
             Self::BelowMinimum => f.write_str("value is below minimum"),
             Self::AboveMaximum => f.write_str("value is above maximum"),
-            Self::Validation(err) => err.fmt(f),
+            Self::Validation(err) => write!(f, "validation error: {}", err),
         }
     }
 }

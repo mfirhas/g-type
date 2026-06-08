@@ -274,7 +274,7 @@ fn error_display_messages() {
 
     assert_eq!(
         GTypeError::<EvenError>::Validation(EvenError).to_string(),
-        "must be even"
+        "validation error: must be even"
     );
 
     assert_eq!(
