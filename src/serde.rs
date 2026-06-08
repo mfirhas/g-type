@@ -30,7 +30,7 @@ where
     {
         let value = T::deserialize(deserializer).map_err(|err| {
             D::Error::custom(format_args!(
-                "failed deserializin {}: {}",
+                "failed deserializin T({}): {}",
                 core::any::type_name::<T>(),
                 err
             ))
