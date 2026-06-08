@@ -169,12 +169,34 @@ A validator is a type implementing:
 
 ```rust
 pub trait Validator<T> {
-    type Target: PartialOrd<T> + ?Sized + 'static;
+    /// Target type for bounds comparison.
+    ///
+    /// # Examples
+    /// - u32 -> u32
+    /// - String -> str
+    /// - Vec\<T\> -> \[T\] or \[T; N\]
+    type Target: PartialOrd<Self::Target> + PartialOrd<T> + ?Sized + 'static;
+
+    /// Validation error type.
     type Error;
 
-    fn min() -> Option<&'static Self::Target>;
-    fn max() -> Option<&'static Self::Target>;
-    fn validate(value: &T) -> Result<(), Self::Error>;
+    /// Minimum value in range, inclusive.
+    #[inline]
+    fn min() -> Option<&'static Self::Target> {
+        None
+    }
+
+    /// Maximum value in range, inclusive.
+    #[inline]
+    fn max() -> Option<&'static Self::Target> {
+        None
+    }
+
+    /// Validation logics.
+    #[inline]
+    fn validate(_: &T) -> Result<(), Self::Error> {
+        Ok(())
+    }
 }
 ```
 
