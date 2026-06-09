@@ -1,4 +1,4 @@
-# GType
+# `g-type`
 
 [![MSRV](https://img.shields.io/crates/msrv/g-type)](https://github.com/mfirhas/g-type/actions/workflows/msrv.yml)
 [![Crates.io](https://img.shields.io/crates/v/g-type.svg)](https://crates.io/crates/g-type)
