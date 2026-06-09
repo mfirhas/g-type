@@ -9,6 +9,7 @@ repository = "https://github.com/mfirhas/g-type"
 documentation = "https://docs.rs/g-type"
 keywords = ["type", "generic", "type-safe", "no-std"]
 categories = ["data-structures"]
+rust-version = "1.85.1"
 exclude = [
   "**/*_test.rs",
   "tests/**",
