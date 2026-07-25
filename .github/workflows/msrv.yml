@@ -2,6 +2,7 @@ name: msrv
 
 env:
   RUST_VERSION: 1.95.0
+  CACHE_NAME: ${{ github.repository }}-cache-msrv
 
 on:
   workflow_dispatch: {}
@@ -26,9 +27,9 @@ jobs:
             ~/.cargo/git
             ~/.cargo/bin
             target
-          key: ${{ runner.os }}-msrv-cache-${{ env.RUST_VERSION }}-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-${{ env.CACHE_NAME }}-${{ env.RUST_VERSION }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-msrv-cache-
+            ${{ runner.os }}-${{ env.CACHE_NAME }}-
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
