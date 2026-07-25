@@ -19,7 +19,6 @@ check:
 
 test:
 	@echo "Running tests..."
-	@cargo test
 	@cargo test --all-features
 	@cargo test -q --doc --all-features
 
@@ -74,7 +73,6 @@ all:
 	@cargo doc --all-features --no-deps
 	@sleep 1
 	@echo "Running tests---------------------------------------------------"
-	@cargo test -q
 	@cargo test -q --all-features
 	@cargo test -q --doc --all-features
 
